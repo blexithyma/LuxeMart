@@ -155,11 +155,37 @@ export default function Home() {
     setUser(null);
   }
 
-  // Add item to cart
-  function addToCart(product: Product) {
+  // Add item to shared cart
+  async function addToCart(product: Product) {
+    if (!user) {
+      alert("Please sign in before adding items to your cart.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("cart_items")
+      .upsert(
+        {
+          user_id: user.id,
+          product_id: product.id,
+          quantity: 1,
+        },
+        {
+          onConflict: "user_id,product_id",
+        }
+      );
+
+    if (error) {
+      console.error("Cart error:", error);
+      alert(`Could not add item: ${error.message}`);
+      return;
+    }
+
     const updatedCart = [...cart, product];
 
     setCart(updatedCart);
+
+    // Keep the existing checkout page working
     localStorage.setItem("cart", JSON.stringify(updatedCart));
 
     alert(`${product.name} was added to your cart.`);
@@ -186,11 +212,16 @@ export default function Home() {
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+          <button
+            onClick={() =>
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          >
             <div className="text-left">
               <h1 className="text-2xl font-bold tracking-tight">
                 LuxeMart
               </h1>
+
               <p className="text-xs text-gray-500">
                 Simple shopping. Better finds.
               </p>
@@ -199,7 +230,9 @@ export default function Home() {
 
           <nav className="hidden items-center gap-7 md:flex">
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={() =>
+                window.scrollTo({ top: 0, behavior: "smooth" })
+              }
               className="text-sm font-medium text-gray-700 hover:text-black"
             >
               Home
@@ -248,7 +281,9 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => setShowEmailLogin(!showEmailLogin)}
+                  onClick={() =>
+                    setShowEmailLogin(!showEmailLogin)
+                  }
                   className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-100"
                 >
                   Sign in
@@ -315,7 +350,9 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => setIsCreatingAccount(!isCreatingAccount)}
+                  onClick={() =>
+                    setIsCreatingAccount(!isCreatingAccount)
+                  }
                   className="text-sm text-gray-600 underline hover:text-black"
                 >
                   {isCreatingAccount
@@ -420,7 +457,9 @@ export default function Home() {
 
         {loading ? (
           <div className="rounded-2xl border bg-white p-10 text-center">
-            <p className="text-gray-600">Preparing something good for you...</p>
+            <p className="text-gray-600">
+              Preparing something good for you...
+            </p>
           </div>
         ) : products.length === 0 ? (
           <div className="rounded-2xl border bg-white p-10 text-center">
@@ -475,7 +514,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* ABOUT / BRAND STORY */}
+      {/* ABOUT */}
       <section
         id="about"
         className="mx-auto max-w-7xl px-5 pb-16 md:px-8"
@@ -534,6 +573,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-10 text-center md:flex-row md:items-center md:justify-between md:px-8 md:text-left">
           <div>
             <h3 className="font-bold">LuxeMart</h3>
+
             <p className="mt-1 text-sm text-gray-500">
               Quality products, simple shopping.
             </p>
